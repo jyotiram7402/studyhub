@@ -33,22 +33,45 @@ export function isAiConfigured(): boolean {
   return Boolean(process.env.GEMINI_API_KEY);
 }
 
-async function post<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(`${API_BASE}/${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": apiKey(),
-    },
-    body: JSON.stringify(body),
-  });
+const MAX_ATTEMPTS = 3;
 
-  if (!response.ok) {
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function post<T>(path: string, body: unknown): Promise<T> {
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const response = await fetch(`${API_BASE}/${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey(),
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (response.ok) {
+      return (await response.json()) as T;
+    }
+
     const detail = await response.text().catch(() => "");
+
+    // Retry transient per-minute rate limits with exponential backoff
+    if (response.status === 429 && attempt < MAX_ATTEMPTS) {
+      await delay(attempt * 5000);
+      continue;
+    }
+
+    if (response.status === 429) {
+      throw new Error(
+        "The AI is busy right now (free-tier rate limit). Please wait a minute and try again."
+      );
+    }
+
     throw new Error(`Gemini request failed (${response.status}): ${detail.slice(0, 300)}`);
   }
 
-  return (await response.json()) as T;
+  throw new Error("The AI is busy right now. Please wait a minute and try again.");
 }
 
 interface GenerateContentResponse {
