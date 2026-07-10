@@ -42,7 +42,12 @@ export async function POST(
   try {
     const explanation = await explainNote(supabase, id, parsed.data.mode);
     return NextResponse.json({ explanation });
-  } catch {
-    return NextResponse.json({ error: "Could not generate an explanation" }, { status: 502 });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "unknown error";
+    console.error("AI explain failed", detail);
+    return NextResponse.json(
+      { error: `Could not generate an explanation: ${detail}` },
+      { status: 502 }
+    );
   }
 }
