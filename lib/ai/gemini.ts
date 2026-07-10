@@ -1,7 +1,7 @@
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta";
 
 export const GENERATION_MODEL = "gemini-2.0-flash";
-export const EMBEDDING_MODEL = "text-embedding-004";
+export const EMBEDDING_MODEL = "gemini-embedding-001";
 export const EMBEDDING_DIMENSIONS = 768;
 
 export interface GeminiPart {
@@ -116,7 +116,9 @@ interface BatchEmbedResponse {
 
 export async function embedText(text: string): Promise<number[]> {
   const data = await post<EmbedContentResponse>(`models/${EMBEDDING_MODEL}:embedContent`, {
-    content: { parts: [{ text: text.slice(0, 9000) }] },
+    model: `models/${EMBEDDING_MODEL}`,
+    content: { parts: [{ text: text.slice(0, 6000) }] },
+    outputDimensionality: EMBEDDING_DIMENSIONS,
   });
   return data.embedding.values;
 }
@@ -132,7 +134,8 @@ export async function embedBatch(texts: string[]): Promise<number[][]> {
       {
         requests: batch.map((text) => ({
           model: `models/${EMBEDDING_MODEL}`,
-          content: { parts: [{ text: text.slice(0, 9000) }] },
+          content: { parts: [{ text: text.slice(0, 6000) }] },
+          outputDimensionality: EMBEDDING_DIMENSIONS,
         })),
       }
     );
