@@ -166,7 +166,9 @@ export default async function NotePage(props: NotePageProps) {
       <ViewTracker noteId={note.id} />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+        }}
       />
 
       <nav aria-label="Breadcrumb" className="mb-6">
