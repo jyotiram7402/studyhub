@@ -30,3 +30,7 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# claude code local files (keep shared ones: settings.json, skills/, commands/)
+CLAUDE.local.md
+.claude/settings.local.json
